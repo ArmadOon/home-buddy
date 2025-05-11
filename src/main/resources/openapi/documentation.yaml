@@ -1,23 +1,615 @@
-openapi: "3.0.3"
+openapi: 3.0.3
 info:
-  title: "Application API"
-  description: "Application API"
+  title: "Home-Buddy API"
+  description: "API for Home-Buddy application - household sharing, chat, calendar, and notes"
   version: "1.0.0"
 servers:
-  - url: "http://0.0.0.0:8080"
+  - url: 'http://0.0.0.0:8080'
+    description: Local development environment
+tags:
+  - name: auth
+    description: Authentication and registration
+  - name: users
+    description: User management
+  - name: households
+    description: Household management
+  - name: chat
+    description: Chat functionality
+  - name: calendar
+    description: Calendar management
+  - name: notes
+    description: Virtual refrigerator notes
+
 paths:
-  /:
-    get:
-      description: "Hello World!"
+  /api/auth/register:
+    post:
+      tags:
+        - auth
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
       responses:
-        "200":
-          description: "OK"
+        '201':
+          description: User successfully registered
           content:
-            text/plain:
+            application/json:
               schema:
-                type: "string"
-              examples:
-                Example#1:
-                  value: "Hello World!"
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid data or email already exists
+
+  /api/auth/login:
+    post:
+      tags:
+        - auth
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid credentials
+
+  /api/users:
+    get:
+      tags:
+        - users
+      summary: Get list of users (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+        '403':
+          description: Access denied
+
+  /api/users/me:
+    get:
+      tags:
+        - users
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+    put:
+      tags:
+        - users
+      summary: Update current user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: User profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid data
+
+  /api/users/{userId}:
+    get:
+      tags:
+        - users
+      summary: Get user by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+
+  /api/households:
+    get:
+      tags:
+        - households
+      summary: Get user's households
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of households
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HouseholdResponse'
+    post:
+      tags:
+        - households
+      summary: Create a new household
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HouseholdRequest'
+      responses:
+        '201':
+          description: Household successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HouseholdResponse'
+
+  /api/households/{householdId}/invite:
+    post:
+      tags:
+        - households
+      summary: Invite user to household
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: householdId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteRequest'
+      responses:
+        '200':
+          description: Invitation sent successfully
+        '404':
+          description: Household or user not found
+
+  /api/households/{householdId}/chat/messages:
+    get:
+      tags:
+        - chat
+      summary: Get household chat message history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: householdId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MessageResponse'
+    post:
+      tags:
+        - chat
+      summary: Send a new message to household chat
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: householdId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+      responses:
+        '201':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/households/{householdId}/calendar/events:
+    get:
+      tags:
+        - calendar
+      summary: Get household calendar events
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: householdId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventResponse'
+    post:
+      tags:
+        - calendar
+      summary: Create a new calendar event
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: householdId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+      responses:
+        '201':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+
+  /api/households/{householdId}/notes:
+    get:
+      tags:
+        - notes
+      summary: Get household virtual notes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: householdId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NoteResponse'
+    post:
+      tags:
+        - notes
+      summary: Create a new virtual note
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: householdId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NoteRequest'
+      responses:
+        '201':
+          description: Note created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NoteResponse'
+
 components:
-  schemas: {}
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserRegistrationRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          minLength: 8
+        name:
+          type: string
+
+    UserUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        password:
+          type: string
+          format: password
+          minLength: 8
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+        userId:
+          type: string
+          format: uuid
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    HouseholdRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+
+    HouseholdResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        ownerId:
+          type: string
+          format: uuid
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserResponse'
+        createdAt:
+          type: string
+          format: date-time
+
+    InviteRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    MessageRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+
+    MessageResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        senderId:
+          type: string
+          format: uuid
+        senderName:
+          type: string
+        householdId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    EventRequest:
+      type: object
+      required:
+        - title
+        - startDateTime
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        startDateTime:
+          type: string
+          format: date-time
+        endDateTime:
+          type: string
+          format: date-time
+        allDay:
+          type: boolean
+          default: false
+
+    EventResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        startDateTime:
+          type: string
+          format: date-time
+        endDateTime:
+          type: string
+          format: date-time
+        allDay:
+          type: boolean
+        creatorId:
+          type: string
+          format: uuid
+        creatorName:
+          type: string
+        householdId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    NoteRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+        color:
+          type: string
+          default: "yellow"
+        position:
+          $ref: '#/components/schemas/Position'
+
+    NoteResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        color:
+          type: string
+        position:
+          $ref: '#/components/schemas/Position'
+        creatorId:
+          type: string
+          format: uuid
+        creatorName:
+          type: string
+        householdId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    Position:
+      type: object
+      properties:
+        x:
+          type: integer
+          default: 0
+        y:
+          type: integer
+          default: 0
