@@ -1,0 +1,741 @@
+openapi: 3.0.3
+info:
+  title: Home Buddy Authentication Service API
+  description: |
+    Authentication, user registration and household management API for Home Buddy application.
+    
+    **Workflow:**
+    1. User registration (with or without invite code)
+    2. Login and JWT token retrieval
+    3. Create household or join existing one
+    4. Household and invitation management
+  version: 1.0.0
+  contact:
+    name: Home Buddy API Support
+    email: support@homebuddy.cz
+servers:
+  - url: http://localhost:8081
+    description: Development server
+  - url: https://api.homebuddy.cz
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and registration operations
+  - name: Household
+    description: Household and invitation management
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: |
+        Registers a new user in the system. If `inviteCode` is provided, 
+        the user will automatically join the corresponding household.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              registration_without_invite:
+                summary: Registration without household invitation
+                value:
+                  username: "tomas"
+                  email: "tomas@example.com"
+                  password: "securepass123"
+                  displayName: "Tomáš"
+              registration_with_invite:
+                summary: Registration with invite code
+                value:
+                  username: "anna"
+                  email: "anna@example.com"
+                  password: "securepass456"
+                  displayName: "Anna"
+                  inviteCode: "ABCD-1234"
+      responses:
+        '201':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+              examples:
+                success_without_household:
+                  summary: Registration successful, needs household
+                  value:
+                    success: true
+                    user:
+                      id: 1
+                      username: "tomas"
+                      email: "tomas@example.com"
+                      displayName: "Tomáš"
+                      householdId: null
+                      createdAt: "2025-07-23T10:30:00Z"
+                      updatedAt: "2025-07-23T10:30:00Z"
+                    household: null
+                    needsHousehold: true
+                success_with_household:
+                  summary: Registration successful, joined household
+                  value:
+                    success: true
+                    user:
+                      id: 2
+                      username: "anna"
+                      email: "anna@example.com"
+                      displayName: "Anna"
+                      householdId: 1
+                      createdAt: "2025-07-23T10:35:00Z"
+                      updatedAt: "2025-07-23T10:35:00Z"
+                    household:
+                      id: 1
+                      name: "Our Home"
+                      inviteCode: "ABCD-1234"
+                      memberCount: 2
+                      createdAt: "2025-07-23T10:25:00Z"
+                      updatedAt: "2025-07-23T10:35:00Z"
+                    needsHousehold: false
+        '400':
+          description: Invalid request data or validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+              examples:
+                validation_error:
+                  summary: Validation errors
+                  value:
+                    success: false
+                    error: "Username must be at least 3 characters long, Password must be at least 8 characters long"
+                user_exists:
+                  summary: User already exists
+                  value:
+                    success: false
+                    error: "User with this username or email already exists"
+                invalid_invite:
+                  summary: Invalid invite code
+                  value:
+                    success: false
+                    error: "Invalid invite code"
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticates user and returns JWT token with user and household information
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              login_with_username:
+                summary: Login with username
+                value:
+                  username: "tomas"
+                  password: "securepass123"
+              login_with_email:
+                summary: Login with email
+                value:
+                  username: "tomas@example.com"
+                  password: "securepass123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+              examples:
+                login_success:
+                  summary: Successful login with household
+                  value:
+                    token: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJ0b21hcyIsImhvdXNlaG9sZElkIjoiMSIsImlhdCI6MTY5MDg5NjAwMCwiZXhwIjoxNjkwOTgyNDAwfQ.example"
+                    user:
+                      id: 1
+                      username: "tomas"
+                      email: "tomas@example.com"
+                      displayName: "Tomáš"
+                      householdId: 1
+                      createdAt: "2025-07-23T10:30:00Z"
+                      updatedAt: "2025-07-23T10:30:00Z"
+                    household:
+                      id: 1
+                      name: "Our Home"
+                      inviteCode: "ABCD-1234"
+                      memberCount: 2
+                      createdAt: "2025-07-23T10:25:00Z"
+                      updatedAt: "2025-07-23T10:35:00Z"
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_credentials:
+                  summary: Invalid username or password
+                  value:
+                    error: "Invalid credentials"
+                    timestamp: "2025-07-23T10:30:00Z"
+
+  /auth/household/create:
+    post:
+      tags:
+        - Household
+      summary: Create new household
+      description: Creates a new household and generates invite code for inviting other members
+      operationId: createHousehold
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateHouseholdRequest'
+            examples:
+              create_household:
+                summary: Create new household
+                value:
+                  name: "Our Home"
+      responses:
+        '201':
+          description: Household created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateHouseholdResponse'
+              examples:
+                success:
+                  summary: Household created successfully
+                  value:
+                    success: true
+                    household:
+                      id: 1
+                      name: "Our Home"
+                      inviteCode: "ABCD-1234"
+                      memberCount: 1
+                      createdAt: "2025-07-23T10:25:00Z"
+                      updatedAt: "2025-07-23T10:25:00Z"
+                    inviteCode: "ABCD-1234"
+        '400':
+          description: Invalid request or user already has household
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateHouseholdResponse'
+              examples:
+                validation_error:
+                  summary: Validation error
+                  value:
+                    success: false
+                    error: "Household name must be at least 2 characters long"
+                already_has_household:
+                  summary: User already has household
+                  value:
+                    success: false
+                    error: "User already belongs to a household"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/household/join:
+    post:
+      tags:
+        - Household
+      summary: Join existing household
+      description: Join an existing household using invite code
+      operationId: joinHousehold
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinHouseholdRequest'
+            examples:
+              join_household:
+                summary: Join household with invite code
+                value:
+                  inviteCode: "ABCD-1234"
+      responses:
+        '200':
+          description: Successfully joined household
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinHouseholdResponse'
+              examples:
+                success:
+                  summary: Successfully joined household
+                  value:
+                    success: true
+                    household:
+                      id: 1
+                      name: "Our Home"
+                      inviteCode: "ABCD-1234"
+                      memberCount: 2
+                      createdAt: "2025-07-23T10:25:00Z"
+                      updatedAt: "2025-07-23T10:35:00Z"
+        '400':
+          description: Invalid invite code or other error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinHouseholdResponse'
+              examples:
+                invalid_invite:
+                  summary: Invalid invite code
+                  value:
+                    success: false
+                    error: "Invalid invite code"
+                already_has_household:
+                  summary: User already has household
+                  value:
+                    success: false
+                    error: "User already belongs to a household"
+                household_full:
+                  summary: Household is full
+                  value:
+                    success: false
+                    error: "Household is full"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/household/validate-invite/{inviteCode}:
+    get:
+      tags:
+        - Household
+      summary: Validate invite code
+      description: Check if invite code is valid and active
+      operationId: validateInviteCode
+      parameters:
+        - name: inviteCode
+          in: path
+          required: true
+          description: Invite code to validate
+          schema:
+            type: string
+            pattern: '^[A-Z]{4}-[0-9]{4}$'
+            example: "ABCD-1234"
+      responses:
+        '200':
+          description: Invite code validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateInviteResponse'
+              examples:
+                valid_code:
+                  summary: Valid invite code
+                  value:
+                    valid: true
+                invalid_code:
+                  summary: Invalid invite code
+                  value:
+                    valid: false
+
+  /auth/household/info:
+    get:
+      tags:
+        - Household
+      summary: Get household information
+      description: Get detailed information about user's household including members
+      operationId: getHouseholdInfo
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Household information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HouseholdInfoResponse'
+              examples:
+                household_info:
+                  summary: Household with members
+                  value:
+                    household:
+                      id: 1
+                      name: "Our Home"
+                      inviteCode: "ABCD-1234"
+                      memberCount: 2
+                      createdAt: "2025-07-23T10:25:00Z"
+                      updatedAt: "2025-07-23T10:35:00Z"
+                    members:
+                      - id: 1
+                        username: "tomas"
+                        email: "tomas@example.com"
+                        displayName: "Tomáš"
+                        householdId: 1
+                        createdAt: "2025-07-23T10:30:00Z"
+                        updatedAt: "2025-07-23T10:30:00Z"
+                      - id: 2
+                        username: "anna"
+                        email: "anna@example.com"
+                        displayName: "Anna"
+                        householdId: 1
+                        createdAt: "2025-07-23T10:35:00Z"
+                        updatedAt: "2025-07-23T10:35:00Z"
+                    memberCount: 2
+                    maxMembers: 10
+        '400':
+          description: User doesn't have household
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                no_household:
+                  summary: User has no household
+                  value:
+                    error: "User is not part of any household"
+                    timestamp: "2025-07-23T10:30:00Z"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Household not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    # Request DTOs
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+        - displayName
+      properties:
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_.-]+$'
+          description: Unique username (alphanumeric, dots, dashes, underscores)
+          example: "tomas"
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: Valid email address
+          example: "tomas@example.com"
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+          description: Password (minimum 8 characters)
+          example: "securepass123"
+        displayName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Display name for the user
+          example: "Tomáš"
+        inviteCode:
+          type: string
+          pattern: '^[A-Z]{4}-[0-9]{4}$'
+          description: Optional invite code to join household (format ABCD-1234)
+          example: "ABCD-1234"
+          nullable: true
+
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Username or email address
+          example: "tomas"
+        password:
+          type: string
+          minLength: 1
+          description: User password
+          example: "securepass123"
+
+    CreateHouseholdRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: Name of the household
+          example: "Our Home"
+
+    JoinHouseholdRequest:
+      type: object
+      required:
+        - inviteCode
+      properties:
+        inviteCode:
+          type: string
+          pattern: '^[A-Z]{4}-[0-9]{4}$'
+          description: Invite code to join household (format ABCD-1234)
+          example: "ABCD-1234"
+
+    # Response DTOs
+    RegisterResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Whether registration was successful
+          example: true
+        user:
+          $ref: '#/components/schemas/UserDto'
+          nullable: true
+        household:
+          $ref: '#/components/schemas/HouseholdDto'
+          nullable: true
+        error:
+          type: string
+          description: Error message if registration failed
+          example: "Username must be at least 3 characters long"
+          nullable: true
+        needsHousehold:
+          type: boolean
+          description: Whether user needs to create or join household
+          example: false
+
+    LoginResponse:
+      type: object
+      required:
+        - token
+        - user
+      properties:
+        token:
+          type: string
+          description: JWT authentication token
+          example: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJ0b21hcyIsImhvdXNlaG9sZElkIjoiMSIsImlhdCI6MTY5MDg5NjAwMCwiZXhwIjoxNjkwOTgyNDAwfQ.example"
+        user:
+          $ref: '#/components/schemas/UserDto'
+        household:
+          $ref: '#/components/schemas/HouseholdDto'
+          nullable: true
+
+    CreateHouseholdResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Whether household creation was successful
+          example: true
+        household:
+          $ref: '#/components/schemas/HouseholdDto'
+          nullable: true
+        inviteCode:
+          type: string
+          pattern: '^[A-Z]{4}-[0-9]{4}$'
+          description: Generated invite code for the household
+          example: "ABCD-1234"
+          nullable: true
+        error:
+          type: string
+          description: Error message if creation failed
+          example: "User already belongs to a household"
+          nullable: true
+
+    JoinHouseholdResponse:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Whether joining household was successful
+          example: true
+        household:
+          $ref: '#/components/schemas/HouseholdDto'
+          nullable: true
+        error:
+          type: string
+          description: Error message if joining failed
+          example: "Invalid invite code"
+          nullable: true
+
+    HouseholdInfoResponse:
+      type: object
+      required:
+        - household
+        - members
+        - memberCount
+        - maxMembers
+      properties:
+        household:
+          $ref: '#/components/schemas/HouseholdDto'
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserDto'
+          description: List of household members
+        memberCount:
+          type: integer
+          minimum: 0
+          description: Current number of household members
+          example: 2
+        maxMembers:
+          type: integer
+          minimum: 1
+          description: Maximum allowed number of household members
+          example: 10
+
+    ValidateInviteResponse:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+          description: Whether the invite code is valid and active
+          example: true
+
+    # Entity DTOs
+    UserDto:
+      type: object
+      required:
+        - id
+        - username
+        - email
+        - displayName
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique user identifier
+          example: 1
+        username:
+          type: string
+          description: Unique username
+          example: "tomas"
+        email:
+          type: string
+          format: email
+          description: User email address
+          example: "tomas@example.com"
+        displayName:
+          type: string
+          description: Display name
+          example: "Tomáš"
+        householdId:
+          type: integer
+          format: int64
+          description: ID of household user belongs to
+          example: 1
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          description: When user was created
+          example: "2025-07-23T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: When user was last updated
+          example: "2025-07-23T10:30:00Z"
+
+    HouseholdDto:
+      type: object
+      required:
+        - id
+        - name
+        - inviteCode
+        - memberCount
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Unique household identifier
+          example: 1
+        name:
+          type: string
+          description: Household name
+          example: "Our Home"
+        inviteCode:
+          type: string
+          pattern: '^[A-Z]{4}-[0-9]{4}$'
+          description: Invite code for joining household
+          example: "ABCD-1234"
+        memberCount:
+          type: integer
+          minimum: 0
+          description: Current number of household members
+          example: 2
+        createdAt:
+          type: string
+          format: date-time
+          description: When household was created
+          example: "2025-07-23T10:25:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: When household was last updated
+          example: "2025-07-23T10:35:00Z"
+
+    # Error responses
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid credentials"
+        timestamp:
+          type: string
+          format: date-time
+          description: When error occurred
+          example: "2025-07-23T10:30:00Z"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing_token:
+              summary: Missing authentication token
+              value:
+                error: "Authentication required"
+                timestamp: "2025-07-23T10:30:00Z"
+            invalid_token:
+              summary: Invalid or expired token
+              value:
+                error: "Invalid or expired token"
+                timestamp: "2025-07-23T10:30:00Z"
