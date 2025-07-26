@@ -9,7 +9,7 @@ plugins {
 }
 
 version = "1.0.0"
-group = "cz.homebuddy.auth"
+group = "com.armadoon.homebuddy.auth"
 
 repositories {
     mavenCentral()
@@ -36,7 +36,7 @@ openApiGenerate {
     generatorName.set("kotlin")
     inputSpec.set("${project.rootDir}/shared/openapi-specs/auth-service.yaml")
     outputDir.set("${layout.buildDirectory.get()}/generated")
-    packageName.set("cz.homebuddy.dto")
+    packageName.set("com.armadoon.homebuddy.dto")
     configOptions.set(mapOf(
         "serializationLibrary" to "jackson",
         "enumPropertyNaming" to "UPPERCASE",
@@ -122,7 +122,7 @@ dependencies {
 }
 
 application {
-    mainClass = "cz.homebuddy.auth.ApplicationKt"
+    mainClass = "com.armadoon.homebuddy.auth.ApplicationKt"
 }
 
 graalvmNative.toolchainDetection = false
@@ -132,7 +132,7 @@ micronaut {
     testRuntime("kotest5")
     processing {
         incremental(true)
-        annotations("cz.homebuddy.auth.*")
+        annotations("com.armadoon.homebuddy.auth.*")
     }
     // Simplified AOT configuration for basic build
     aot {

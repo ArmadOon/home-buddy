@@ -16,7 +16,7 @@ jpa:
 # Minimal logging
 logger:
   levels:
-    cz.homebuddy.auth: WARN
+    com.armadoon.homebuddy.auth: WARN
     io.micronaut: WARN
     root: WARN
 

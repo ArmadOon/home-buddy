@@ -11,7 +11,7 @@ plugins {
 }
 
 allprojects {
-    group = "cz.homebuddy"
+    group = "com.armadoon.homebuddy"
     version = "1.0.0"
 
     repositories {

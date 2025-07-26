@@ -7,7 +7,7 @@ micronaut:
 # Minimal configuration - no JPA, no Security for now
 logger:
   levels:
-    cz.homebuddy.auth: DEBUG
+    com.armadoon.homebuddy.auth: DEBUG
     io.micronaut: INFO
     root: INFO
 
