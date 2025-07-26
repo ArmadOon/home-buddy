@@ -1,0 +1,29 @@
+micronaut:
+  application:
+    name: auth-service-test
+  environments: test
+  server:
+    port: -1  # Random port for tests
+  security:
+    enabled: false
+
+# Disable all complex features for clean build
+jpa:
+  default:
+    enabled: false
+
+
+# Minimal logging
+logger:
+  levels:
+    cz.homebuddy.auth: WARN
+    io.micronaut: WARN
+    root: WARN
+
+# Disable all endpoints except health
+endpoints:
+  all:
+    enabled: false
+  health:
+    enabled: true
+    sensitive: false

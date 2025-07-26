@@ -1,5 +1,7 @@
 rootProject.name = "home-buddy"
 
-// Subprojects will be added as services are created
-// include(":auth-service")
+include(":auth-service")
+
+// Future services will be added here:
 // include(":api-gateway")
+// include(":calendar-service")

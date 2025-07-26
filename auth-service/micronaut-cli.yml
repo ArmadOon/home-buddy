@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: com.armadoon.homebuddy.auth
+testFramework: kotest
+sourceLanguage: kotlin
+buildTool: gradle_kotlin
+features: [app-name, data, data-jpa, gradle, h2, hibernate-validator, http-client-test, jdbc-hikari, kotest, kotlin, kotlin-application, ksp, logback, management, micronaut-aot, micronaut-build, micronaut-http-validation, netty-server, openapi, properties, readme, security-annotations, security-jwt, serialization-jackson, shade, static-resources]

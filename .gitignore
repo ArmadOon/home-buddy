@@ -15,8 +15,10 @@ out/
 # VS Code
 .vscode/
 
-# MacOS
-.DS_Store
+# Environment files - CRITICAL!
+.env
+.env.local
+.env.*.local
 
 # Logs
 logs/
@@ -26,13 +28,8 @@ logs/
 *.db
 *.sqlite
 
-# Environment
-.env
-.env.local
-
 # Generated code
 **/build/generated/
 
-# Node (pokud budeš mít frontend)
-node_modules/
-npm-debug.log*
+# MacOS
+.DS_Store

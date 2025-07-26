@@ -1,0 +1,51 @@
+micronaut:
+  application:
+    name: auth-service
+  server:
+    port: ${AUTH_SERVICE_PORT:8081}
+
+# Minimal configuration - no JPA, no Security for now
+logger:
+  levels:
+    cz.homebuddy.auth: DEBUG
+    io.micronaut: INFO
+    root: INFO
+
+# Management endpoints
+endpoints:
+  all:
+    enabled: false
+  health:
+    enabled: true
+    sensitive: false
+
+# Application info
+info:
+  app:
+    name: ${micronaut.application.name}
+    version: "1.0.0"
+    description: "Home Buddy Authentication Service"
+
+---
+# Test environment - minimal configuration
+micronaut:
+  environments: test
+  application:
+    name: auth-service-test
+  server:
+    port: -1
+
+# Disable everything for tests
+jpa:
+  default:
+    enabled: false
+
+logger:
+  levels:
+    root: WARN
+
+endpoints:
+  all:
+    enabled: false
+  health:
+    enabled: true
