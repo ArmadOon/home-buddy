@@ -3,12 +3,43 @@ micronaut:
     name: auth-service
   server:
     port: ${AUTH_SERVICE_PORT:8081}
+  security:
+    authentication: bearer
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: "${JWT_SECRET:change-me-to-256-bit-secret-key-at-least-32-chars-for-development}"
+              base64: true
+        generator:
+          access-token:
+            expiration: 86400 # 24 hours
 
-# Minimal configuration - no JPA, no Security for now
+# Database configuration
+datasources:
+  default:
+    url: jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+    dialect: H2
+
+jpa:
+  default:
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: create-drop
+        show_sql: true
+        format_sql: true
+
+# Logging
 logger:
   levels:
     com.armadoon.homebuddy.auth: DEBUG
-    io.micronaut: INFO
+    io.micronaut.security: DEBUG
+    io.micronaut.data: DEBUG
     root: INFO
 
 # Management endpoints
@@ -27,7 +58,7 @@ info:
     description: "Home Buddy Authentication Service"
 
 ---
-# Test environment - minimal configuration
+# Test environment
 micronaut:
   environments: test
   application:
@@ -35,17 +66,13 @@ micronaut:
   server:
     port: -1
 
-# Disable everything for tests
-jpa:
+datasources:
   default:
-    enabled: false
+    url: jdbc:h2:mem:testDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
 
 logger:
   levels:
     root: WARN
-
-endpoints:
-  all:
-    enabled: false
-  health:
-    enabled: true

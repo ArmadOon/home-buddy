@@ -97,18 +97,16 @@ dependencies {
     // COMMENTED OUT - Will be added when implementing features
     // ========================================
 
-    // Database & JPA (uncomment when adding entities)
-    // ksp("io.micronaut.data:micronaut-data-processor")
-    // implementation("io.micronaut.beanvalidation:micronaut-hibernate-validator")
-    // implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
-    // implementation("io.micronaut.sql:micronaut-jdbc-hikari")
-    // runtimeOnly("com.h2database:h2")
-    // runtimeOnly("org.postgresql:postgresql")
+     ksp("io.micronaut.data:micronaut-data-processor")
+     implementation("io.micronaut.beanvalidation:micronaut-hibernate-validator")
+     implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
+     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+     runtimeOnly("com.h2database:h2")
+     runtimeOnly("org.postgresql:postgresql")
 
-    // Security & JWT (uncomment when adding auth)
-    // ksp("io.micronaut.security:micronaut-security-annotations")
-    // implementation("io.micronaut.security:micronaut-security-jwt")
-    // implementation("org.springframework.security:spring-security-crypto:6.2.1")
+     ksp("io.micronaut.security:micronaut-security-annotations")
+     implementation("io.micronaut.security:micronaut-security-jwt")
+     implementation("org.springframework.security:spring-security-crypto:6.2.1")
 
     // Advanced logging (uncomment when needed)
     // implementation("net.logstash.logback:logstash-logback-encoder:7.4")
@@ -167,8 +165,7 @@ allOpen {
     annotation("io.micronaut.http.annotation.Controller")
     annotation("jakarta.inject.Singleton")
 
-    // Commented out - will be needed when adding JPA
-    // annotation("jakarta.persistence.Entity")
-    // annotation("jakarta.persistence.MappedSuperclass")
-    // annotation("jakarta.persistence.Embeddable")
+     annotation("jakarta.persistence.Entity")
+     annotation("jakarta.persistence.MappedSuperclass")
+     annotation("jakarta.persistence.Embeddable")
 }
