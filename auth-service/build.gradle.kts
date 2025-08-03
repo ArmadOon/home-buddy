@@ -62,69 +62,59 @@ sourceSets {
 }
 
 dependencies {
-    // Minimal Micronaut KSP processors - only what we need for basic app
+    // =========================
+    // KSP processors (annotation processing)
+    // =========================
     ksp("io.micronaut:micronaut-http-validation")
     ksp("io.micronaut.openapi:micronaut-openapi")
     ksp("io.micronaut.serde:micronaut-serde-processor")
+    ksp("io.micronaut.data:micronaut-data-processor")
+    ksp("io.micronaut.security:micronaut-security-annotations")
 
-    // Minimal Micronaut Core - only basic functionality
+    // =========================
+    // Main implementation dependencies
+    // =========================
     implementation("io.micronaut:micronaut-management")
     implementation("io.micronaut.kotlin:micronaut-kotlin-runtime")
     implementation("io.micronaut.serde:micronaut-serde-jackson")
-
-    // Kotlin
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-
-    // YAML support for application.yml
-    runtimeOnly("org.yaml:snakeyaml")
-
-    // Jackson for JSON serialization
-    runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("io.micronaut.beanvalidation:micronaut-hibernate-validator")
+    implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    implementation("io.micronaut.security:micronaut-security-jwt")
+    implementation("org.springframework.security:spring-security-crypto:6.4.4")
+    implementation("org.springframework:spring-jcl:6.1.14")
 
-    // Logging
-    runtimeOnly("ch.qos.logback:logback-classic")
-
-    // OpenAPI compile-only dependencies
+    // =========================
+    // Compile-only dependencies
+    // =========================
     compileOnly("io.micronaut:micronaut-http-client")
     compileOnly("io.micronaut.openapi:micronaut-openapi-annotations")
+    compileOnly("io.micronaut:micronaut-core-processor")
 
-    // Testing - minimal setup
+    // =========================
+    // Runtime-only dependencies
+    // =========================
+    runtimeOnly("org.yaml:snakeyaml")
+    runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
+    runtimeOnly("ch.qos.logback:logback-classic")
+    runtimeOnly("com.h2database:h2")
+    runtimeOnly("org.postgresql:postgresql")
+
+    // =========================
+    // Test dependencies
+    // =========================
     testImplementation("io.micronaut:micronaut-http-client")
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
     testImplementation("io.kotest:kotest-assertions-core:5.8.0")
 
-    // ========================================
-    // DATABASE & JPA
-    // ========================================
-    ksp("io.micronaut.data:micronaut-data-processor")
-    implementation("io.micronaut.beanvalidation:micronaut-hibernate-validator")
-    implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
-    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
-    runtimeOnly("com.h2database:h2")
-    runtimeOnly("org.postgresql:postgresql")
-
-    // ========================================
-    // SECURITY & JWT
-    // ========================================
-    ksp("io.micronaut.security:micronaut-security-annotations")
-    implementation("io.micronaut.security:micronaut-security-jwt")
-    implementation("org.springframework.security:spring-security-crypto:6.4.4")
-    implementation("org.springframework:spring-jcl:6.1.14")  // <-- Spring commons logging
-
-    // ========================================
-    // INTROSPECTION SUPPORT pro generated DTOs
-    // ========================================
-    compileOnly("io.micronaut:micronaut-core-processor")  // <-- pro @Introspected
-
-    // Advanced logging (uncomment when needed)
+    // =========================
+    // Optional/Advanced dependencies (uncomment as needed)
+    // =========================
     // implementation("net.logstash.logback:logstash-logback-encoder:7.4")
-
-    // Testing tools (uncomment when writing complex tests)
     // testImplementation("io.mockk:mockk:1.13.8")
-
-    // AOT plugins (uncomment for production optimization)
     // aotPlugins(platform("io.micronaut.platform:micronaut-platform:4.9.1"))
     // aotPlugins("io.micronaut.security:micronaut-security-aot")
 }
