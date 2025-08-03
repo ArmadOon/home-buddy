@@ -20,7 +20,7 @@ class AuthController(
     private val authService: AuthService,
     private val householdService: HouseholdService,
     private val userRepository: UserRepository,
-    private val jwtService: JwtService  // <-- použij vlastní JWT service
+    private val jwtService: JwtService
 ) {
 
     companion object {
@@ -57,7 +57,6 @@ class AuthController(
             householdService.getHouseholdInfo(it)?.household
         }
 
-        // Vygeneruj JWT token pomocí vlastního service
         val token = jwtService.generateToken(
             userId = user.id!!,
             username = user.username,
