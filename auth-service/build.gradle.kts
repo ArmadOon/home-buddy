@@ -61,6 +61,11 @@ sourceSets {
     }
 }
 
+// Version variables
+val springSecurityVersion = "6.4.4"
+val springJclVersion = "6.1.14"
+val kotestVersion = "5.8.0"
+
 dependencies {
     // =========================
     // KSP processors (annotation processing)
@@ -84,8 +89,8 @@ dependencies {
     implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     implementation("io.micronaut.security:micronaut-security-jwt")
-    implementation("org.springframework.security:spring-security-crypto:6.4.4")
-    implementation("org.springframework:spring-jcl:6.1.14")
+    implementation("org.springframework.security:spring-security-crypto:$springSecurityVersion")
+    implementation("org.springframework:spring-jcl:$springJclVersion")
 
     // =========================
     // Compile-only dependencies
@@ -107,8 +112,8 @@ dependencies {
     // Test dependencies
     // =========================
     testImplementation("io.micronaut:micronaut-http-client")
-    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
-    testImplementation("io.kotest:kotest-assertions-core:5.8.0")
+    testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
+    testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
 
     // =========================
     // Optional/Advanced dependencies (uncomment as needed)
