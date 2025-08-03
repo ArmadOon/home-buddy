@@ -2,7 +2,7 @@ micronaut:
   application:
     name: auth-service
   server:
-    port: 8081
+    port: ${AUTH_SERVICE_PORT:8081}
     cors:
       enabled: true
   security:
@@ -12,7 +12,7 @@ micronaut:
         signatures:
           secret:
             generator:
-              secret: =dYndS9x50Ou7/rqZZ/halULNGLfeIdxiuIByrkpOFG8=
+              secret: ${JWT_SECRET:dYndS9x50Ou7/rqZZ/halULNGLfeIdxiuIByrkpOFG8=}
               base64: false
         generator:
           access-token:
@@ -20,10 +20,10 @@ micronaut:
 
 datasources:
   default:
-    url: jdbc:h2:mem:testDb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: ''
+    url: ${DATABASE_URL:jdbc:h2:mem:testDb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    driver-class-name: ${DATABASE_DRIVER:org.h2.Driver}
+    username: ${DATABASE_USERNAME:sa}
+    password: ${DATABASE_PASSWORD:}
     dialect: H2
 
 jpa:
