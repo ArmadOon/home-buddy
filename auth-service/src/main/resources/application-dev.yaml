@@ -1,0 +1,12 @@
+security:
+  authentication: bearer
+  token:
+    jwt:
+      signatures:
+        secret:
+          generator:
+            secret: =dYndS9x50Ou7/rqZZ/halULNGLfeIdxiuIByrkpOFG8=
+            base64: false
+      generator:
+        access-token:
+          expiration: 86400 # 24 hours

@@ -18,5 +18,5 @@ interface UserRepository : CrudRepository<User, Long> {
     fun existsByUsernameOrEmail(username: String, email: String): Boolean
 
     @Query("UPDATE User u SET u.householdId = :householdId WHERE u.id = :userId")
-    fun updateHouseholdId(userId: Long, householdId: Long): Int
+    fun updateHouseholdId(userId: Long, householdId: Long?): Int
 }

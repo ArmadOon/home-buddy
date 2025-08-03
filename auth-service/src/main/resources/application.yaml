@@ -1,16 +1,26 @@
 micronaut:
   application:
     name: auth-service
-  security:
-    enabled: false
   server:
     port: 8081
     cors:
       enabled: true
+  security:
+    authentication: bearer
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: =dYndS9x50Ou7/rqZZ/halULNGLfeIdxiuIByrkpOFG8=
+              base64: false
+        generator:
+          access-token:
+            expiration: 86400 # 24 hours
 
 datasources:
   default:
-    url: jdbc:h2:mem:testDb
+    url: jdbc:h2:mem:testDb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     driver-class-name: org.h2.Driver
     username: sa
     password: ''
@@ -18,18 +28,22 @@ datasources:
 
 jpa:
   default:
+    entity-scan:
+      packages: 'com.armadoon.homebuddy.auth.entity'
     properties:
       hibernate:
         hbm2ddl:
           auto: create-drop
         show_sql: true
         format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
 
 logger:
   levels:
     com.armadoon.homebuddy.auth: DEBUG
     io.micronaut.data: DEBUG
     io.micronaut.security: DEBUG
+    org.hibernate.SQL: DEBUG
     root: WARN
 
 endpoints:

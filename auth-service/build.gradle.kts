@@ -41,7 +41,9 @@ openApiGenerate {
         "serializationLibrary" to "jackson",
         "enumPropertyNaming" to "UPPERCASE",
         "modelPropertyNaming" to "camelCase",
-        "library" to "jvm-okhttp4"
+        "library" to "jvm-okhttp4",
+        "useJakartaEe" to "true",                    // <-- pro Jakarta annotations
+        "additionalModelTypeAnnotations" to "@io.micronaut.core.annotation.Introspected;@io.micronaut.serde.annotation.Serdeable"  // <-- Micronaut annotations
     ))
 
     globalProperties.set(mapOf(
@@ -109,6 +111,12 @@ dependencies {
     ksp("io.micronaut.security:micronaut-security-annotations")
     implementation("io.micronaut.security:micronaut-security-jwt")
     implementation("org.springframework.security:spring-security-crypto:6.4.4")
+    implementation("org.springframework:spring-jcl:6.1.14")  // <-- Spring commons logging
+
+    // ========================================
+    // INTROSPECTION SUPPORT pro generated DTOs
+    // ========================================
+    compileOnly("io.micronaut:micronaut-core-processor")  // <-- pro @Introspected
 
     // Advanced logging (uncomment when needed)
     // implementation("net.logstash.logback:logstash-logback-encoder:7.4")
@@ -169,4 +177,5 @@ allOpen {
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.MappedSuperclass")
     annotation("jakarta.persistence.Embeddable")
+    annotation("jakarta.transaction.Transactional")  // <-- přidej toto
 }
