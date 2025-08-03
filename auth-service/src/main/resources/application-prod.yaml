@@ -1,0 +1,97 @@
+micronaut:
+  application:
+    name: auth-service
+  server:
+    port: ${AUTH_SERVICE_PORT:8081}
+    cors:
+      enabled: true
+      configurations:
+        web:
+          allowed-origins:
+            - http://localhost:3000
+            - http://localhost:8080
+            - https://homebuddy.cz
+          allowed-methods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - OPTIONS
+          allowed-headers:
+            - Content-Type
+            - Authorization
+            - X-Requested-With
+          exposed-headers:
+            - Authorization
+          allow-credentials: true
+          max-age: 3600
+  security:
+    authentication: bearer
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: ${JWT_SECRET}
+              base64: false
+        generator:
+          access-token:
+            expiration: 86400 # 24 hours
+
+datasources:
+  default:
+    url: ${DATABASE_URL}
+    driver-class-name: ${DATABASE_DRIVER:org.postgresql.Driver}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    dialect: POSTGRES
+    pool-name: homebuddy-pool
+    minimum-idle: 2
+    maximum-pool-size: 10
+    connection-timeout: 30000
+    idle-timeout: 600000
+    max-lifetime: 1800000
+
+jpa:
+  default:
+    entity-scan:
+      packages: 'com.armadoon.homebuddy.auth.entity'
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: validate  # Pro produkci - jen validace, migrace řídí Flyway
+        show_sql: false
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+        connection:
+          characterEncoding: utf-8
+          CharSet: utf-8
+          useUnicode: true
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      locations: classpath:db/migration
+      baseline-on-migrate: true
+      validate-on-migrate: true
+      clean-disabled: true  # Bezpečnost - zakázání clean v produkci
+
+logger:
+  levels:
+    com.armadoon.homebuddy.auth: ${LOGGING_LEVEL_COM_ARMADOON:INFO}
+    io.micronaut.data: WARN
+    io.micronaut.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    root: ${LOGGING_LEVEL_ROOT:WARN}
+
+endpoints:
+  all:
+    enabled: false
+  health:
+    enabled: true
+    sensitive: false
+    details-visible: anonymous

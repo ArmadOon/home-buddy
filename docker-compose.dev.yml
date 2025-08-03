@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-homebuddy}
+      POSTGRES_USER: ${POSTGRES_USER:-homebuddy}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-homebuddy}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-homebuddy} -d ${POSTGRES_DB:-homebuddy}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - homebuddy-dev-network
+
+
+volumes:
+  postgres_dev_data:
+    driver: local
+
+networks:
+  homebuddy-dev-network:
+    driver: bridge
