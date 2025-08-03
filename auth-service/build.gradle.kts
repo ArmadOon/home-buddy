@@ -6,6 +6,7 @@ plugins {
     id("com.gradleup.shadow") version "8.3.7"
     id("io.micronaut.aot") version "4.5.4"
     id("org.openapi.generator") version "7.2.0"
+    id("org.flywaydb.flyway") version "10.0.1"  // <-- Flyway plugin
 }
 
 version = "1.0.0"
@@ -42,8 +43,8 @@ openApiGenerate {
         "enumPropertyNaming" to "UPPERCASE",
         "modelPropertyNaming" to "camelCase",
         "library" to "jvm-okhttp4",
-        "useJakartaEe" to "true",                    // <-- pro Jakarta annotations
-        "additionalModelTypeAnnotations" to "@io.micronaut.core.annotation.Introspected;@io.micronaut.serde.annotation.Serdeable"  // <-- Micronaut annotations
+        "useJakartaEe" to "true",
+        "additionalModelTypeAnnotations" to "@io.micronaut.core.annotation.Introspected;@io.micronaut.serde.annotation.Serdeable"
     ))
 
     globalProperties.set(mapOf(
@@ -91,6 +92,7 @@ dependencies {
     implementation("io.micronaut.security:micronaut-security-jwt")
     implementation("org.springframework.security:spring-security-crypto:$springSecurityVersion")
     implementation("org.springframework:spring-jcl:$springJclVersion")
+    implementation("io.micronaut.flyway:micronaut-flyway")  // <-- Flyway pro Micronaut
 
     // =========================
     // Compile-only dependencies
@@ -107,6 +109,8 @@ dependencies {
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("com.h2database:h2")
     runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("org.flywaydb:flyway-core")  // <-- Flyway core
+    runtimeOnly("org.flywaydb:flyway-database-postgresql")  // <-- PostgreSQL support
 
     // =========================
     // Test dependencies
@@ -114,14 +118,6 @@ dependencies {
     testImplementation("io.micronaut:micronaut-http-client")
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
-
-    // =========================
-    // Optional/Advanced dependencies (uncomment as needed)
-    // =========================
-    // implementation("net.logstash.logback:logstash-logback-encoder:7.4")
-    // testImplementation("io.mockk:mockk:1.13.8")
-    // aotPlugins(platform("io.micronaut.platform:micronaut-platform:4.9.1"))
-    // aotPlugins("io.micronaut.security:micronaut-security-aot")
 }
 
 application {
@@ -137,7 +133,6 @@ micronaut {
         incremental(true)
         annotations("com.armadoon.homebuddy.auth.*")
     }
-    // Simplified AOT configuration for basic build
     aot {
         optimizeServiceLoading = false
         convertYamlToJava = false
@@ -150,14 +145,20 @@ micronaut {
     }
 }
 
+// Flyway configuration pro gradle tasks
+flyway {
+    url = "jdbc:postgresql://localhost:5432/homebuddy"
+    user = "homebuddy"
+    password = "homebuddy"
+    locations = arrayOf("classpath:db/migration")
+}
+
 tasks.named<io.micronaut.gradle.docker.NativeImageDockerfile>("dockerfileNative") {
     jdkVersion = "21"
 }
 
-// Test configuration
 tasks.test {
     useJUnitPlatform()
-
     testLogging {
         events("passed", "skipped", "failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
@@ -165,12 +166,11 @@ tasks.test {
     }
 }
 
-// Basic AllOpen configuration - only what we need now
 allOpen {
     annotation("io.micronaut.http.annotation.Controller")
     annotation("jakarta.inject.Singleton")
     annotation("jakarta.persistence.Entity")
     annotation("jakarta.persistence.MappedSuperclass")
     annotation("jakarta.persistence.Embeddable")
-    annotation("jakarta.transaction.Transactional")  // <-- přidej toto
+    annotation("jakarta.transaction.Transactional")
 }

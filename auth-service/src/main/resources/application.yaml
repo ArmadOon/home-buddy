@@ -2,7 +2,7 @@ micronaut:
   application:
     name: auth-service
   server:
-    port: ${AUTH_SERVICE_PORT}
+    port: ${AUTH_SERVICE_PORT:8081}
     cors:
       enabled: true
   security:
@@ -12,7 +12,7 @@ micronaut:
         signatures:
           secret:
             generator:
-              secret: ${JWT_SECRET}
+              secret: ${JWT_SECRET:dev-jwt-secret-for-local-development-only-change-in-production}
               base64: false
         generator:
           access-token:
@@ -20,11 +20,11 @@ micronaut:
 
 datasources:
   default:
-    url: ${DATABASE_URL}
-    driver-class-name: ${DATABASE_DRIVER}
-    username: ${DATABASE_USERNAME:sa}
-    password: ${DATABASE_PASSWORD:}
-    dialect: H2
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/homebuddy}
+    driver-class-name: ${DATABASE_DRIVER:org.postgresql.Driver}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    dialect: POSTGRES
 
 jpa:
   default:
@@ -33,10 +33,18 @@ jpa:
     properties:
       hibernate:
         hbm2ddl:
-          auto: create-drop
+          auto: validate  # Flyway řídí schéma
         show_sql: true
         format_sql: true
-        dialect: org.hibernate.dialect.H2Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+flyway:
+  datasources:
+    default:
+      enabled: true
+      locations: classpath:db/migration
+      baseline-on-migrate: true
+      validate-on-migrate: true
 
 logger:
   levels:
@@ -44,7 +52,9 @@ logger:
     io.micronaut.data: DEBUG
     io.micronaut.security: DEBUG
     org.hibernate.SQL: DEBUG
-    root: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.flywaydb: DEBUG
+    root: INFO
 
 endpoints:
   all:
@@ -52,3 +62,4 @@ endpoints:
   health:
     enabled: true
     sensitive: false
+    details-visible: anonymous

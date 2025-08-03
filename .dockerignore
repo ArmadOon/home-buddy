@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Documentation
+README.md
+LICENSE
+*.md
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Build artifacts (budou se vytvořit v kontejneru)
+**/build/
+**/target/
+**/.gradle/
+
+# Environment files
+.env*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Scripts
+scripts/
