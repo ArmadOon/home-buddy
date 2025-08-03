@@ -4,6 +4,7 @@ import com.armadoon.homebuddy.auth.mapping.toDto
 import com.armadoon.homebuddy.auth.repository.UserRepository
 import com.armadoon.homebuddy.auth.service.AuthService
 import com.armadoon.homebuddy.auth.service.HouseholdService
+import com.armadoon.homebuddy.auth.service.JwtService
 import com.armadoon.homebuddy.dto.models.*
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.annotation.*
@@ -18,7 +19,8 @@ import java.time.OffsetDateTime
 class AuthController(
     private val authService: AuthService,
     private val householdService: HouseholdService,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val jwtService: JwtService  // <-- použij vlastní JWT service
 ) {
 
     companion object {
@@ -55,12 +57,19 @@ class AuthController(
             householdService.getHouseholdInfo(it)?.household
         }
 
-
+        // Vygeneruj JWT token pomocí vlastního service
+        val token = jwtService.generateToken(
+            userId = user.id!!,
+            username = user.username,
+            email = user.email,
+            displayName = user.displayName,
+            householdId = user.householdId
+        )
 
         logger.info("Successful login for user: ${user.username} (id=${user.id})")
 
         return HttpResponse.ok(LoginResponse(
-            token = "will_be_generated_automatically",
+            token = token,
             user = user.toDto(),
             household = household
         ))

@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.security.crypto.password.PasswordEncoder
 
 @Singleton
-open class AuthService(  // <-- přidej 'open'
+open class AuthService(
     private val userRepository: UserRepository,
     private val householdRepository: HouseholdRepository,
     private val passwordEncoder: PasswordEncoder
@@ -25,7 +25,7 @@ open class AuthService(  // <-- přidej 'open'
     }
 
     @Transactional
-    open fun register(request: RegisterRequest): RegisterResponse {  // <-- přidej 'open'
+    open fun register(request: RegisterRequest): RegisterResponse {
         logger.info("Registration attempt for username: ${request.username}, email: ${request.email}")
 
         // Check if user already exists

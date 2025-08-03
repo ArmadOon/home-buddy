@@ -5,7 +5,6 @@ import com.armadoon.homebuddy.auth.mapping.toDto
 import com.armadoon.homebuddy.auth.mapping.toEntity
 import com.armadoon.homebuddy.auth.repository.HouseholdRepository
 import com.armadoon.homebuddy.auth.repository.UserRepository
-import com.armadoon.homebuddy.dto.*
 import com.armadoon.homebuddy.dto.models.CreateHouseholdRequest
 import com.armadoon.homebuddy.dto.models.CreateHouseholdResponse
 import com.armadoon.homebuddy.dto.models.HouseholdInfoResponse
@@ -16,7 +15,7 @@ import jakarta.transaction.Transactional
 import org.slf4j.LoggerFactory
 
 @Singleton
-open class HouseholdService(  // <-- přidej 'open'
+open class HouseholdService(
     private val householdRepository: HouseholdRepository,
     private val userRepository: UserRepository
 ) {
@@ -26,7 +25,7 @@ open class HouseholdService(  // <-- přidej 'open'
     }
 
     @Transactional
-    open fun createHousehold(request: CreateHouseholdRequest, createdBy: Long): CreateHouseholdResponse {  // <-- přidej 'open'
+    open fun createHousehold(request: CreateHouseholdRequest, createdBy: Long): CreateHouseholdResponse {
         logger.info("Creating new household '${request.name}' for user $createdBy")
 
         try {
@@ -77,7 +76,7 @@ open class HouseholdService(  // <-- přidej 'open'
     }
 
     @Transactional
-    open fun joinHousehold(request: JoinHouseholdRequest, userId: Long): JoinHouseholdResponse {  // <-- přidej 'open'
+    open fun joinHousehold(request: JoinHouseholdRequest, userId: Long): JoinHouseholdResponse {
         logger.info("User $userId attempting to join household with code ${request.inviteCode}")
 
         try {
@@ -205,7 +204,7 @@ open class HouseholdService(  // <-- přidej 'open'
     }
 
     @Transactional
-    open fun removeUserFromHousehold(userId: Long): Boolean {  // <-- přidej 'open'
+    open fun removeUserFromHousehold(userId: Long): Boolean {
         return try {
             val updated = userRepository.updateHouseholdId(userId, null)
             logger.info("Removed user $userId from household (affected rows: $updated)")
@@ -217,12 +216,11 @@ open class HouseholdService(  // <-- přidej 'open'
     }
 
     @Transactional
-    open fun deactivateHousehold(householdId: Long): Boolean {  // <-- přidej 'open'
+    open fun deactivateHousehold(householdId: Long): Boolean {
         return try {
             val household = householdRepository.findById(householdId).orElse(null) ?: return false
 
-            // Note: V reálné aplikaci bys měl implementovat update metodu v repository
-            // Pro teď jen vracíme false, protože nemáme update metodu
+
             logger.warn("Deactivate household not implemented yet for ID: $householdId")
             false
         } catch (e: Exception) {
