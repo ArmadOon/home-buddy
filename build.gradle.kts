@@ -8,6 +8,7 @@ plugins {
     id("com.gradleup.shadow") version "8.3.7" apply false
     id("io.micronaut.aot") version "4.5.4" apply false
     id("org.openapi.generator") version "7.2.0" apply false
+
 }
 
 allprojects {

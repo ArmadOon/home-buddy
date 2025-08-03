@@ -41,7 +41,9 @@ openApiGenerate {
         "serializationLibrary" to "jackson",
         "enumPropertyNaming" to "UPPERCASE",
         "modelPropertyNaming" to "camelCase",
-        "library" to "jvm-okhttp4"
+        "library" to "jvm-okhttp4",
+        "useJakartaEe" to "true",                    // <-- pro Jakarta annotations
+        "additionalModelTypeAnnotations" to "@io.micronaut.core.annotation.Introspected;@io.micronaut.serde.annotation.Serdeable"  // <-- Micronaut annotations
     ))
 
     globalProperties.set(mapOf(
@@ -94,19 +96,27 @@ dependencies {
     testImplementation("io.kotest:kotest-assertions-core:5.8.0")
 
     // ========================================
-    // COMMENTED OUT - Will be added when implementing features
+    // DATABASE & JPA
     // ========================================
+    ksp("io.micronaut.data:micronaut-data-processor")
+    implementation("io.micronaut.beanvalidation:micronaut-hibernate-validator")
+    implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
+    implementation("io.micronaut.sql:micronaut-jdbc-hikari")
+    runtimeOnly("com.h2database:h2")
+    runtimeOnly("org.postgresql:postgresql")
 
-     ksp("io.micronaut.data:micronaut-data-processor")
-     implementation("io.micronaut.beanvalidation:micronaut-hibernate-validator")
-     implementation("io.micronaut.data:micronaut-data-hibernate-jpa")
-     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
-     runtimeOnly("com.h2database:h2")
-     runtimeOnly("org.postgresql:postgresql")
+    // ========================================
+    // SECURITY & JWT
+    // ========================================
+    ksp("io.micronaut.security:micronaut-security-annotations")
+    implementation("io.micronaut.security:micronaut-security-jwt")
+    implementation("org.springframework.security:spring-security-crypto:6.4.4")
+    implementation("org.springframework:spring-jcl:6.1.14")  // <-- Spring commons logging
 
-     ksp("io.micronaut.security:micronaut-security-annotations")
-     implementation("io.micronaut.security:micronaut-security-jwt")
-     implementation("org.springframework.security:spring-security-crypto:6.2.1")
+    // ========================================
+    // INTROSPECTION SUPPORT pro generated DTOs
+    // ========================================
+    compileOnly("io.micronaut:micronaut-core-processor")  // <-- pro @Introspected
 
     // Advanced logging (uncomment when needed)
     // implementation("net.logstash.logback:logstash-logback-encoder:7.4")
@@ -164,8 +174,8 @@ tasks.test {
 allOpen {
     annotation("io.micronaut.http.annotation.Controller")
     annotation("jakarta.inject.Singleton")
-
-     annotation("jakarta.persistence.Entity")
-     annotation("jakarta.persistence.MappedSuperclass")
-     annotation("jakarta.persistence.Embeddable")
+    annotation("jakarta.persistence.Entity")
+    annotation("jakarta.persistence.MappedSuperclass")
+    annotation("jakarta.persistence.Embeddable")
+    annotation("jakarta.transaction.Transactional")  // <-- přidej toto
 }

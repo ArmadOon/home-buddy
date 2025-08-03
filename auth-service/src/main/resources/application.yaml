@@ -2,7 +2,9 @@ micronaut:
   application:
     name: auth-service
   server:
-    port: ${AUTH_SERVICE_PORT:8081}
+    port: 8081
+    cors:
+      enabled: true
   security:
     authentication: bearer
     token:
@@ -10,69 +12,43 @@ micronaut:
         signatures:
           secret:
             generator:
-              secret: "${JWT_SECRET:change-me-to-256-bit-secret-key-at-least-32-chars-for-development}"
-              base64: true
+              secret: =dYndS9x50Ou7/rqZZ/halULNGLfeIdxiuIByrkpOFG8=
+              base64: false
         generator:
           access-token:
             expiration: 86400 # 24 hours
 
-# Database configuration
 datasources:
   default:
-    url: jdbc:h2:mem:devDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-    driverClassName: org.h2.Driver
+    url: jdbc:h2:mem:testDb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
     username: sa
     password: ''
     dialect: H2
 
 jpa:
   default:
+    entity-scan:
+      packages: 'com.armadoon.homebuddy.auth.entity'
     properties:
       hibernate:
         hbm2ddl:
           auto: create-drop
         show_sql: true
         format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
 
-# Logging
 logger:
   levels:
     com.armadoon.homebuddy.auth: DEBUG
-    io.micronaut.security: DEBUG
     io.micronaut.data: DEBUG
-    root: INFO
+    io.micronaut.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    root: WARN
 
-# Management endpoints
 endpoints:
   all:
     enabled: false
   health:
     enabled: true
     sensitive: false
-
-# Application info
-info:
-  app:
-    name: ${micronaut.application.name}
-    version: "1.0.0"
-    description: "Home Buddy Authentication Service"
-
----
-# Test environment
-micronaut:
-  environments: test
-  application:
-    name: auth-service-test
-  server:
-    port: -1
-
-datasources:
-  default:
-    url: jdbc:h2:mem:testDb;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-    driverClassName: org.h2.Driver
-    username: sa
-    password: ''
-
-logger:
-  levels:
-    root: WARN
