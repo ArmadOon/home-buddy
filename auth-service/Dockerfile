@@ -10,7 +10,7 @@ COPY gradlew gradlew.bat build.gradle.kts settings.gradle.kts ./
 COPY auth-service/build.gradle.kts auth-service/gradle.properties ./auth-service/
 
 # Kopírování OpenAPI specs (potřebné pro build)
-COPY auth-service/shared/ ./auth-service/shared/
+COPY auth-service/shared/ ./shared/
 
 # Download dependencies (tato vrstva se cachuje)
 RUN ./gradlew :auth-service:dependencies --no-daemon
@@ -22,7 +22,7 @@ COPY auth-service/src/ ./auth-service/src/
 RUN ./gradlew :auth-service:shadowJar --no-daemon
 
 # Runtime stage - menší image
-FROM openjdk:21-jre-slim
+FROM eclipse-temurin:21-jre-jammy
 
 # Instalace curl pro health checks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
