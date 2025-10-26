@@ -56,7 +56,8 @@ open class HouseholdService(
             )
 
             // Update user's household
-            userRepository.updateHouseholdId(createdBy, household.id!!)
+            val user = existingUser.copy(householdId = household.id)
+            userRepository.update(user)
 
             logger.info("Successfully created household ${household.id} with invite code $inviteCode")
 
@@ -118,7 +119,8 @@ open class HouseholdService(
             }
 
             // Add user to household
-            userRepository.updateHouseholdId(userId, household.id!!)
+            val updatedUser = user.copy(householdId = household.id)
+            userRepository.update(updatedUser)
 
             logger.info("User $userId successfully joined household ${household.id}")
 
@@ -206,9 +208,11 @@ open class HouseholdService(
     @Transactional
     open fun removeUserFromHousehold(userId: Long): Boolean {
         return try {
-            val updated = userRepository.updateHouseholdId(userId, null)
-            logger.info("Removed user $userId from household (affected rows: $updated)")
-            updated > 0
+            val user = userRepository.findById(userId).orElse(null) ?: return false
+            val updatedUser = user.copy(householdId = null)
+            userRepository.update(updatedUser)
+            logger.info("Removed user $userId from household")
+            true
         } catch (e: Exception) {
             logger.error("Error removing user $userId from household", e)
             false

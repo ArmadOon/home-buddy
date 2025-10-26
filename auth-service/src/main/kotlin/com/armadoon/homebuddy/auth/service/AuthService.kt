@@ -141,11 +141,13 @@ open class AuthService(
     }
 
     @Transactional
-    open fun updateUserHousehold(userId: Long, householdId: Long): Boolean {  // <-- přidej 'open'
+    open fun updateUserHousehold(userId: Long, householdId: Long?): Boolean {
         return try {
-            val updated = userRepository.updateHouseholdId(userId, householdId)
-            logger.info("Updated user $userId household to $householdId (affected rows: $updated)")
-            updated > 0
+            val user = userRepository.findById(userId).orElse(null) ?: return false
+            val updatedUser = user.copy(householdId = householdId)
+            userRepository.update(updatedUser)
+            logger.info("Updated user $userId household to $householdId")
+            true
         } catch (e: Exception) {
             logger.error("Error updating user $userId household to $householdId", e)
             false
