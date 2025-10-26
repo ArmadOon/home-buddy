@@ -1,13 +1,12 @@
 package com.armadoon.homebuddy.auth.repository
 
 import com.armadoon.homebuddy.auth.entity.User
-import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.Repository
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.jpa.repository.JpaRepository
 import java.util.*
 
 @Repository
-interface UserRepository : CrudRepository<User, Long> {
+interface UserRepository : JpaRepository<User, Long> {
 
     fun findByUsername(username: String): Optional<User>
 
@@ -17,6 +16,5 @@ interface UserRepository : CrudRepository<User, Long> {
 
     fun existsByUsernameOrEmail(username: String, email: String): Boolean
 
-    @Query("UPDATE User u SET u.householdId = :householdId WHERE u.id = :userId")
-    fun updateHouseholdId(userId: Long, householdId: Long?): Int
+    // We'll handle updateHouseholdId in the service layer using entity updates
 }
