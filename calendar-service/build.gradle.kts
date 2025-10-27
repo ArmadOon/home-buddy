@@ -123,7 +123,6 @@ application {
 graalvmNative.toolchainDetection = false
 
 micronaut {
-    version("4.9.1")
     runtime("netty")
     testRuntime("kotest5")
     processing {
