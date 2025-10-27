@@ -1,0 +1,654 @@
+openapi: 3.0.3
+info:
+  title: Home Buddy Calendar Service API
+  description: |
+    Calendar and event management API for Home Buddy application.
+
+    **Features:**
+    - Create and manage household events
+    - Support for recurring events
+    - Event assignments and status tracking
+    - Event categorization and tagging
+    - Reminders and notifications
+  version: 1.0.0
+  contact:
+    name: Home Buddy API Support
+    email: support@homebuddy.cz
+
+servers:
+  - url: http://localhost:8082
+    description: Development server
+  - url: https://api.homebuddy.cz/calendar
+    description: Production server
+
+tags:
+  - name: Events
+    description: Event management operations
+  - name: Reminders
+    description: Reminder management
+  - name: Tags
+    description: Tag management for events
+
+paths:
+  /events:
+    post:
+      tags:
+        - Events
+      summary: Create new event
+      description: Create a new event in the household calendar
+      operationId: createEvent
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+            examples:
+              simple_event:
+                summary: Simple one-time event
+                value:
+                  title: "Team Meeting"
+                  description: "Monthly team sync"
+                  eventType: "APPOINTMENT"
+                  startDateTime: "2025-10-28T14:00:00Z"
+                  endDateTime: "2025-10-28T15:00:00Z"
+                  allDayEvent: false
+                  priority: "MEDIUM"
+              chore_assignment:
+                summary: Assigned chore
+                value:
+                  title: "Clean Kitchen"
+                  description: "Weekly kitchen cleaning"
+                  eventType: "CHORE"
+                  startDateTime: "2025-10-28T10:00:00Z"
+                  endDateTime: "2025-10-28T11:00:00Z"
+                  assignedTo: 2
+                  priority: "HIGH"
+      responses:
+        '201':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+    get:
+      tags:
+        - Events
+      summary: List events
+      description: Get list of household events with optional filters
+      operationId: listEvents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: startDate
+          in: query
+          description: Filter events starting from this date
+          schema:
+            type: string
+            format: date
+            example: "2025-10-28"
+        - name: endDate
+          in: query
+          description: Filter events until this date
+          schema:
+            type: string
+            format: date
+            example: "2025-11-28"
+        - name: eventType
+          in: query
+          description: Filter by event type
+          schema:
+            $ref: '#/components/schemas/EventType'
+        - name: assignedTo
+          in: query
+          description: Filter events assigned to specific user ID
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          description: Filter by event status
+          schema:
+            $ref: '#/components/schemas/EventStatus'
+        - name: onlyMine
+          in: query
+          description: Show only events created by or assigned to current user
+          schema:
+            type: boolean
+            default: false
+        - name: page
+          in: query
+          description: Page number (0-indexed)
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: size
+          in: query
+          description: Page size
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 100
+        - name: sort
+          in: query
+          description: Sort field and direction
+          schema:
+            type: string
+            default: "startDateTime,asc"
+            example: "startDateTime,asc"
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /events/{id}:
+    get:
+      tags:
+        - Events
+      summary: Get event details
+      description: Get detailed information about a specific event
+      operationId: getEvent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Event ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    put:
+      tags:
+        - Events
+      summary: Update event
+      description: Update an existing event. Only creator or assigned user can modify.
+      operationId: updateEvent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Event ID
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+    delete:
+      tags:
+        - Events
+      summary: Delete event
+      description: Delete an event. Only creator or assigned user can delete.
+      operationId: deleteEvent
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Event ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Event deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /events/{id}/status:
+    patch:
+      tags:
+        - Events
+      summary: Update event status
+      description: Mark event as completed, cancelled, or pending
+      operationId: updateEventStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Event ID
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventStatusRequest'
+      responses:
+        '200':
+          description: Event status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+components:
+  schemas:
+    # Request DTOs
+    CreateEventRequest:
+      type: object
+      required:
+        - title
+        - eventType
+        - startDateTime
+        - endDateTime
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Event title
+          example: "Team Meeting"
+        description:
+          type: string
+          maxLength: 2000
+          description: Detailed description of the event
+          example: "Monthly team synchronization meeting"
+          nullable: true
+        eventType:
+          $ref: '#/components/schemas/EventType'
+        startDateTime:
+          type: string
+          format: date-time
+          description: Event start date and time
+          example: "2025-10-28T14:00:00Z"
+        endDateTime:
+          type: string
+          format: date-time
+          description: Event end date and time
+          example: "2025-10-28T15:00:00Z"
+        allDayEvent:
+          type: boolean
+          default: false
+          description: Whether this is an all-day event
+        location:
+          type: string
+          maxLength: 500
+          description: Event location
+          example: "Conference Room A"
+          nullable: true
+        priority:
+          $ref: '#/components/schemas/Priority'
+        assignedTo:
+          type: integer
+          format: int64
+          description: User ID to assign this event to
+          example: 2
+          nullable: true
+        isRecurring:
+          type: boolean
+          default: false
+          description: Whether this event recurs
+        recurrenceRule:
+          type: string
+          maxLength: 500
+          description: Recurrence rule (RFC 5545 format or simplified)
+          example: "FREQ=WEEKLY;BYDAY=MO,WE,FR"
+          nullable: true
+
+    UpdateEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Event title
+          nullable: true
+        description:
+          type: string
+          maxLength: 2000
+          description: Event description
+          nullable: true
+        eventType:
+          $ref: '#/components/schemas/EventType'
+        startDateTime:
+          type: string
+          format: date-time
+          description: Event start date and time
+          nullable: true
+        endDateTime:
+          type: string
+          format: date-time
+          description: Event end date and time
+          nullable: true
+        allDayEvent:
+          type: boolean
+          description: Whether this is an all-day event
+          nullable: true
+        location:
+          type: string
+          maxLength: 500
+          description: Event location
+          nullable: true
+        priority:
+          $ref: '#/components/schemas/Priority'
+        assignedTo:
+          type: integer
+          format: int64
+          description: User ID to assign this event to
+          nullable: true
+
+    UpdateEventStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          $ref: '#/components/schemas/EventStatus'
+
+    # Response DTOs
+    EventResponse:
+      type: object
+      required:
+        - id
+        - householdId
+        - createdBy
+        - title
+        - eventType
+        - startDateTime
+        - endDateTime
+        - allDayEvent
+        - priority
+        - isRecurring
+        - status
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: integer
+          format: int64
+          description: Event unique identifier
+          example: 1
+        householdId:
+          type: integer
+          format: int64
+          description: Household this event belongs to
+          example: 1
+        createdBy:
+          type: integer
+          format: int64
+          description: User ID who created the event
+          example: 1
+        assignedTo:
+          type: integer
+          format: int64
+          description: User ID assigned to this event
+          example: 2
+          nullable: true
+        title:
+          type: string
+          description: Event title
+          example: "Team Meeting"
+        description:
+          type: string
+          description: Event description
+          example: "Monthly team synchronization meeting"
+          nullable: true
+        eventType:
+          $ref: '#/components/schemas/EventType'
+        startDateTime:
+          type: string
+          format: date-time
+          description: Event start date and time
+          example: "2025-10-28T14:00:00Z"
+        endDateTime:
+          type: string
+          format: date-time
+          description: Event end date and time
+          example: "2025-10-28T15:00:00Z"
+        allDayEvent:
+          type: boolean
+          description: Whether this is an all-day event
+          example: false
+        location:
+          type: string
+          description: Event location
+          example: "Conference Room A"
+          nullable: true
+        priority:
+          $ref: '#/components/schemas/Priority'
+        isRecurring:
+          type: boolean
+          description: Whether this event recurs
+          example: false
+        recurrenceRule:
+          type: string
+          description: Recurrence rule
+          example: "FREQ=WEEKLY;BYDAY=MO,WE,FR"
+          nullable: true
+        status:
+          $ref: '#/components/schemas/EventStatus'
+        completedAt:
+          type: string
+          format: date-time
+          description: When the event was marked as completed
+          example: "2025-10-28T15:00:00Z"
+          nullable: true
+        completedBy:
+          type: integer
+          format: int64
+          description: User ID who completed the event
+          example: 2
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+          description: When event was created
+          example: "2025-10-28T10:00:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: When event was last updated
+          example: "2025-10-28T10:00:00Z"
+
+    EventListResponse:
+      type: object
+      required:
+        - content
+        - totalElements
+        - totalPages
+        - size
+        - number
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventResponse'
+          description: List of events
+        totalElements:
+          type: integer
+          format: int64
+          description: Total number of events
+          example: 100
+        totalPages:
+          type: integer
+          description: Total number of pages
+          example: 5
+        size:
+          type: integer
+          description: Page size
+          example: 20
+        number:
+          type: integer
+          description: Current page number (0-indexed)
+          example: 0
+
+    # Enums
+    EventType:
+      type: string
+      enum:
+        - CHORE
+        - APPOINTMENT
+        - REMINDER
+        - SOCIAL
+        - OTHER
+      description: Type of event
+      example: "CHORE"
+
+    Priority:
+      type: string
+      enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+      description: Event priority level
+      default: MEDIUM
+      example: "MEDIUM"
+
+    EventStatus:
+      type: string
+      enum:
+        - PENDING
+        - COMPLETED
+        - CANCELLED
+      description: Current status of the event
+      default: PENDING
+      example: "PENDING"
+
+    # Error responses
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid request"
+        timestamp:
+          type: string
+          format: date-time
+          description: When error occurred
+          example: "2025-10-28T10:30:00Z"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from auth service login endpoint
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missing_token:
+              summary: Missing authentication token
+              value:
+                error: "Authentication required"
+                timestamp: "2025-10-28T10:30:00Z"
+            invalid_token:
+              summary: Invalid or expired token
+              value:
+                error: "Invalid or expired token"
+                timestamp: "2025-10-28T10:30:00Z"
+
+    BadRequestError:
+      description: Invalid request data or validation errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            validation_error:
+              summary: Validation error
+              value:
+                error: "Start date must be before end date"
+                timestamp: "2025-10-28T10:30:00Z"
+
+    ForbiddenError:
+      description: User doesn't have permission for this operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            forbidden:
+              summary: Permission denied
+              value:
+                error: "You don't have permission to modify this event"
+                timestamp: "2025-10-28T10:30:00Z"
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not_found:
+              summary: Event not found
+              value:
+                error: "Event not found"
+                timestamp: "2025-10-28T10:30:00Z"
