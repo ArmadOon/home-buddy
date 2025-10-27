@@ -74,6 +74,44 @@ services:
     networks:
       - homebuddy-network
 
+  calendar-service:
+    build:
+      context: .
+      dockerfile: calendar-service/Dockerfile
+    environment:
+      # Database configuration
+      DATABASE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      DATABASE_DRIVER: org.postgresql.Driver
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # JWT configuration
+      JWT_SECRET: ${JWT_SECRET}
+
+      # Service configuration
+      CALENDAR_SERVICE_PORT: 8082
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+
+      # Logging
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_COM_ARMADOON: DEBUG
+    ports:
+      - "${CALENDAR_SERVICE_PORT:-8082}:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      # redis:
+      #   condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - homebuddy-network
+
   # API Gateway (připraveno pro budoucnost)
   # api-gateway:
   #   build:
