@@ -52,7 +52,7 @@ open class EventService(
         return savedEvent.toDto()
     }
 
-    open fun listEvents(
+     fun listEvents(
         householdId: Long,
         userId: Long,
         startDate: LocalDate?,
@@ -114,7 +114,7 @@ open class EventService(
         return events.map { it.toDto() }
     }
 
-    open fun getEvent(eventId: Long, householdId: Long): EventResponse {
+     fun getEvent(eventId: Long, householdId: Long): EventResponse {
         logger.debug("Fetching event $eventId for household $householdId")
 
         val event = eventRepository.findByIdAndHouseholdId(eventId, householdId)
